@@ -1,0 +1,203 @@
+{% extends "base.html" %} <!-- Heredando (Bloque) plantilla index -->
+
+{% block contenido %}
+<script type="text/javascript">
+	$(document).ready(function(){
+		
+		$('#registrar_tareas').click(function(e){
+			
+			//Para validar campos vacios
+			var cod_actividad = $('#id_cod_actividad_e').find('option').filter(':selected').val()
+			var usuario = $('#id_empleados').find('option').filter(':selected').val()
+	
+			if (cod_actividad == 0) {
+				bootbox.alert('Debe seleccionar el código para asignar la actividad', function() {
+					$('.nav-tabs a[href=#tabs_A]').tab('show') ;
+					$('#id_cod_actividad_e').parent('div').addClass('has-error'); // colocar class has-error de boostrap
+					$('#id_cod_actividad_e').focus() 
+				});
+			}else if (usuario == 0){
+				bootbox.alert('Debe indicar ', function(){
+					$('.nav-tabs a[href=#tabs_A]').tab('show') ;
+					$('#id_empleados').parent('div').addClass('has-error');
+					$('#id_empleados').focus() 
+				});
+			}else if ($('#indicaciones_e').val().trim() == ''){
+				bootbox.alert('Debe indicar los requerimientos para esta actividad', function(){
+					$('.nav-tabs a[href=#tabs_A]').tab('show') ;
+					$('#indicaciones_e').parent('div').addClass('has-error');
+					$('#indicaciones_e').focus() 
+				});
+			}
+			else{
+				$('#codigoE,#nom_actividad_e,#id_fecha_i_e,#id_fecha_p_e,#id_des_actividad_e').prop('disabled',false);
+				$.post('',$('#form_empleados').serialize(),function(response){
+					if (response == 'existe_cod') {
+						bootbox.alert("Esta actividad ya esta registrada", function() {
+							$('.nav-tabs a[href=#tabs_A]').tab('show') ;
+							$('#codigoE').parent('div').addClass('has-error'); // colocar class has-error de boostrap
+						});
+					}else{
+						url = '/menu/empleados/asignar_tareas/listado_emp'
+						window.location = url
+					}
+				});
+			}
+	
+		})
+		
+		$('#fechaP_a_e').datepicker({
+			format: "dd/mm/yyyy",
+			language: "es",
+			startDate: "+1d",
+			//daysOfWeekDisabled: "0,6",
+			autoclose: true,
+			
+		})
+		
+		///// Para validar campos numericos, alfanumericos y seleccion
+		$("#id_cod_actividad_e,#id_empleados").select2();
+		$('#nom_actividad_e,#indicaciones_e').alphanumeric({allow:"´,@,-.# "}); //Valida solo valores numericos y texto
+		//$('#id_edad,#id_cedula,#id_telefono1,#id_telefono2').numeric(); //Valida solo permite valores numericos
+			
+		$('#volver').click(function(){
+			url = '/menu/empleados/asignar_tareas/listado_emp'
+			window.location = url
+		})
+		$('#limpiar').click(function(){
+			$('#id_cod_actividad_e,#id_empleados').select2('val', '0');
+		})
+		
+		$("#todos_e").click(function() {  
+			if($(this).is(':checked')) {
+				var data = $('#id_empleados').find('option')
+				var valores = new Array();
+				
+				$.each(data, function() {
+					
+					valores.push($(this).val())
+				});
+				//console.log(valores)
+				$('#id_empleados').val(valores).trigger("change"); 
+			}  
+		});
+			
+	});
+
+</script>
+<style>
+    label{
+        font-weight: bold
+    }
+</style>
+    <html>
+        <body>
+			
+            <form method="post" id="form_empleados" enctype="multipart/form-data">
+                {% csrf_token %}
+				<br/>
+                <div style="width: 100%;text-transform:uppercase;box-shadow: 0 1px 5px rgba(0,0,0,.85); text-align: left" class="panel panel-danger">
+					<div class="panel-heading">
+						<label style="float: left" class="panel-title " ><a style="color: white" href="/menu/empleados/tareas/listado_emp" >Actividad</a>
+						> Asignar</label>
+						<br>
+					</div>
+                    <div class="panel-body">
+                        <!-- Apertura de Tabs (Secciones) -->
+                        <ul class="nav nav-tabs">
+                            <li class="active" data-toggle="popover" data-trigger="focus" title="Datos de la actividad" data-content="En este panel se ingresan los datos requeridos para asignar una actividad" data-placement="top">
+                                <a data-toggle="tab" href="#tabs_A">Tareas</a>
+                            </li>
+                        </ul>
+                        <!-- Cierre de Tabs (Secciones) -->
+                        <!-- Apertura de tabs (Contenidos) -->
+                        <div class="tab-content">
+                            <div id="tabs_A" class="tab-pane fade in active">
+                                <div class="panel-body">
+                                <!-- Apertura de datos para asignar actividad a otros departamentos  -->
+								<div class="form-group col-xs-1"><label>Usuario</label></div>
+                                <div class="form-group col-xs-2">
+                                    <span style="color: red; font-weight: bold">{{usuario_E|upper}}</span>
+                                </div>
+								<div class="form-group col-xs-5">
+									<input id="codigoAB" maxlength="30"  style="width: 100%;" name="codigoAB" type="hidden" value="" disabled='disabled'/>
+								</div>
+								<div class="form-group col-xs-1"><label>Código</label></div>
+								<div class="form-group col-xs-3">
+									<input id="codigoE" maxlength="30"  style="width: 100%;" name="codigoE" type="text" value="{{codigoE}}" disabled='disabled'/>
+								</div>
+								<br/><br/><br/>
+                                <fieldset><legend style="text-align: left">Asignar Tareas a empleados</legend></fieldset>
+                                <div class="form-group col-xs-1"><label>Gerencia</label></div>
+                                <div class="form-group col-xs-11">
+                                    <input id="cod_departamento" name="codigoDepartamento_e" type="hidden" value="{{user.usuariodepart.departamento.id}}"/>
+									<input id="departamento" maxlength="30"  style="width: 100%;text-align: left" name="departamento" type="text" disabled='disabled' value="{{user.usuariodepart.departamento.nom_departamento}}"/>
+                                </div>
+								<div class="form-group col-xs-1"><label>Código</label></div>
+								<div class="form-group col-xs-2">
+									<select style="width:100%;text-align: center" class="form-control input-sm" id="id_cod_actividad_e" name="cod_actividad_e" >
+										<option value="0">SELECCIONE</option>
+										{% for act in actividad_e %}
+											<option value="{{act.cod_actividad__id}}">{{act.cod_actividad__cod_actividad}}</option>
+										{% endfor %}
+									</select>
+								</div>
+								<div class="form-group col-xs-1"><label>Nombre</label></div>
+								<div class="form-group col-xs-8">
+									<input id="nom_actividad_e" maxlength="30"  style="width: 100%; text-align: center; text-transform:uppercase;" name="nom_actividad_e" type="text" placeholder="Nombre de la actividad" disabled='disabled'/>
+								</div>
+								<div class="form-group col-xs-1"><label>Descripción</label></div>
+								<div class="form-group col-xs-12">
+									<textarea cols="70" id="id_des_actividad_e" name="des_actividad_e" rows="05" style="width: 100%;text-align: justify; text-transform:uppercase;" placeholder="Descripción de la actividad" disabled='disabled'></textarea>
+								</div>
+								<div class="form-group col-xs-1"><label>Inicial</label></div>
+								<div class="form-group col-xs-3">
+									<input id="id_fecha_i_e" maxlength="30"  style="width: 100%;text-align: center" name="fecha_i_e" type="text" disabled='disabled'/>
+								</div>
+								<div class="form-group col-xs-1"><label>Pautada</label></div>
+								<div class="form-group col-xs-3">
+									<input id="id_fecha_p_e" maxlength="30"  style="width: 100%;text-align: center" name="fecha_p_e" type="text" disabled='disabled'/>
+								</div>
+								<div class="form-group col-xs-1"><label>Asignada</label></div>
+								<div class="form-group col-xs-3">
+									<input id="fechaP_a_e" maxlength="30"  style="width: 100%;text-align: center" name="fechaP_a_e" type="text" />
+								</div>
+								<div class="form-group col-xs-2"><label>Seleccionar Todos</label></div>
+								<div class="form-group col-xs-10">
+									<input type="checkbox" id="todos_e">
+								</div>
+								<div class="form-group col-xs-12">
+									<label>Asignar a:</label>
+									<select style="width:100%;text-align: left" class="form-control input-sm" id="id_empleados" name="empleados" data-placeholder="SELECCIONE" multiple='multiple'>
+										{% for emp in lista_emp %}
+											<option value="{{emp.id}}">{{emp.first_name}} {{emp.last_name}}</option>
+										{% endfor %}
+									</select>
+								</div>
+								<div class="form-group col-xs-12">
+									<label>Indicaciones</label>
+									<textarea cols="70" id="indicaciones_e" name="indicaciones_e" rows="05" style="width: 100%;text-align: justify; text-transform:uppercase;" onkeyup="javascript:this.value=this.value.toUpperCase();" placeholder="Indique su requerimiento"></textarea>
+								</div>
+                            </div>
+                       </div>
+                    </div>
+                </div>
+                
+                <input id='user_create' type="hidden" name='user_create' value='{{ user.id }}'>
+				<input id='porcentaje' type="hidden" name='porcentaje' value='0'>
+                <div class="row" style="text-align: center">
+                    <button type="button" id="volver" style="font-weight: bold;font-size: 13px" class="btn btn-warning " >
+                        &nbsp;<span class="glyphicon glyphicon-chevron-left"></span>&nbsp;Volver
+                    </button>
+                    <button type="button" id="registrar_tareas" style="font-weight: bold;font-size: 13px" class="btn btn-danger">
+                        &nbsp;<span class="glyphicon glyphicon-floppy-disk"></span>&nbsp;Registrar
+                    </button>
+                    <button type="reset" id="limpiar" style="font-weight: bold;font-size: 13px; background: linear-gradient(#f4eb2f, #e5a32d); color: white " class="btn">
+                        &nbsp;<span class="glyphicon glyphicon-retweet"></span>&nbsp;&nbsp;Limpiar
+                    </button>
+                </div>
+                <br/>
+        </form>
+    </body>
+</html>
+{% endblock %}

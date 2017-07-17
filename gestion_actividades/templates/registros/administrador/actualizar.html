@@ -1,0 +1,249 @@
+{% extends "base.html" %} <!-- Heredando (Bloque) plantilla index -->
+
+{% block contenido %}
+
+<html>
+
+<script type="text/javascript">
+$(document).ready(function(){
+    
+    $('#registrar_act').click(function(e){
+		var departamento = $('#departamento').find('option').filter(':selected').val()
+        
+        //Para validar campos vacios
+
+		if ($('#nom_actividad').val().trim() == '') {
+            bootbox.alert('El nombre de la actividad no debe estar en blanco', function() {
+				$('.nav-tabs a[href=#tabs_A]').tab('show') ;
+				$('#nom_actividad').parent('div').addClass('has-error'); // colocar class has-error de boostrap
+				$('#nom_actividad').focus() 
+			});
+		}else if (departamento == 0){
+			bootbox.alert('Debe seleccionar el departamento', function() {
+				$('.nav-tabs a[href=#tabs_A]').tab('show') ;
+				$('#departamento').parent('div').addClass('has-error'); // colocar class has-error de boostrap
+				$('#departamento').focus() 
+			});
+		}else if ($('#des_actividad').val().trim() == ''){
+			bootbox.alert('La descripción de la actividad no debe estar en blanco', function() {
+				$('.nav-tabs a[href=#tabs_A]').tab('show') ;
+				$('#des_actividad').parent('div').addClass('has-error'); // colocar class has-error de boostrap
+				$('#des_actividad').focus() 
+			});
+		}		
+		else{
+			$('#fecha_i,#fecha_p,#fecha_o,#cod_actividad,#nom_actividad,#des_actividad,#departamento').prop('disabled',false);
+			$.post('',$('#form_actividad').serialize(),function(response){
+				if (response == 'existe_cod') {
+					bootbox.alert("Esta actividad ya esta registrada", function() {
+						$('.nav-tabs a[href=#tabs_A]').tab('show') ;
+						$('#cod_actividad').parent('div').addClass('has-error'); // colocar class has-error de boostrap
+					});
+				}else{
+					url = '/menu/registros/administrador/listar/'
+					window.location = url
+				}
+			});
+		}
+
+    })
+	
+	
+	$('#fecha_i,#fecha_p,#fecha_o').datepicker({
+		format: "dd/mm/yyyy",
+		language: "es",
+		startDate: "+1d",
+		//daysOfWeekDisabled: "0,6",
+		autoclose: true,
+	})
+	
+	///// Para validar campos numericos, alfanumericos y seleccion
+	$("#departamento").select2();
+    $('#nom_actividad,#des_actividad,#observacion').alphanumeric({allow:"´,@,-.# "}); //Valida solo valores numericos y texto
+    //$('#id_edad,#id_cedula,#id_telefono1,#id_telefono2').numeric(); //Valida solo permite valores numericos
+	
+    $('#volver').click(function(){
+        url = '/menu/registros/administrador/listar/'
+        window.location = url
+    })
+    $('#limpiar').click(function(){
+        $('#departamento').select2('val', '0');
+    })
+})
+
+</script>
+<style>
+    label{
+        font-weight: bold
+    }
+</style>
+<body>
+	
+    <form method="post" id="form_actividad" enctype="multipart/form-data">
+	{% csrf_token %}
+	<br/>
+    <div style="width: 100%;text-transform:uppercase;box-shadow: 0 1px 5px rgba(0,0,0,.85); text-align: left" class="panel panel-danger">
+	    <div class="panel-heading">
+			<label style="float: left" class="panel-title " ><a style="color: white" href="/menu/registros/administrador/listar/" >Actividad</a>
+			> Actualizar</label>
+			<br>
+		</div>
+		<div class="panel-body">
+			<!-- Apertura de Tabs (Secciones) -->
+			<ul class="nav nav-tabs">
+				<li class="active" data-toggle="popover" data-trigger="focus" title="Datos del equipo" data-content="En este panel se ingresan los datos requeridos para registrar una actividad" data-placement="top">
+					<a data-toggle="tab" href="#tabs_A">Datos Requeridos</a>
+				</li>
+			</ul>
+			<!-- Cierre de Tabs (Secciones) -->
+			<!-- Apertura de tabs (Contenidos) -->
+			<div class="tab-content">
+				<div id="tabs_A" class="tab-pane fade in active">
+					 <div class="panel-body">
+						<!-- Apertura de datos principales de la empresa  -->							
+						<div class="form-group col-xs-1"><label>Usuario</label></div>
+						<div class="form-group col-xs-3">
+							<span style="color: red; font-weight: bold;text-transform:uppercase;" onkeyup="javascript:this.value=this.value.toUpperCase();"">{{usuario|upper}}</span>
+						</div>
+						<div class="form-group col-xs-1"><label>Estatus</label></div>
+						<div class="form-group col-xs-3">
+							<span style="color: red; font-weight: bold;text-transform:uppercase;" onkeyup="javascript:this.value=this.value.toUpperCase();">
+								{% if registro_act.status == '1' %}
+										<span style='color: red; font-weight: bold'>Activo</span>
+								{% endif %}
+								{% if registro_act.status == '2' %}
+										<span style='color: blue; font-weight: bold'>Inactivo</span>
+								{% endif %}
+							</span>
+						</div>
+						<div class="form-group col-xs-1"><label>Código</label></div>
+						<div class="form-group col-xs-3">
+							<input id="cod_actividad" maxlength="30"  style="width: 100%;text-align: center;text-transform:uppercase;" onkeyup="javascript:this.value=this.value.toUpperCase();" name="cod_actividad" type="text" value='{{registro_act.cod_actividad}}' disabled="disabled"/>
+						</div>
+						<br/><br/><br/>
+						<div class="form-group col-xs-1"><label>Inicio</label></div>
+						<div class="form-group col-xs-3">
+							<input id="fecha_i" maxlength="30"  style="width: 100%;text-align: center;text-transform:uppercase;" onkeyup="javascript:this.value=this.value.toUpperCase();" name="fecha_i" type="text" value="{{registro_act.fecha_i |date:"SHORT_DATE_FORMAT"}}" disabled="disabled"/>
+						</div>   
+						<div class="form-group col-xs-1"><label>Pautada</label></div>
+						<div class="form-group col-xs-3">
+							{% if registro_existe == 1 %}
+								<input id="fecha_p" maxlength="30"  style="width: 100%;text-align: center;text-transform:uppercase;" onkeyup="javascript:this.value=this.value.toUpperCase();" name="fecha_p" type="text" value="{{registro_act.fecha_p |date:"SHORT_DATE_FORMAT"}}" disabled="disabled"/>
+							{% else %}
+								<input id="fecha_p" maxlength="30"  style="width: 100%;text-align: center;text-transform:uppercase;" onkeyup="javascript:this.value=this.value.toUpperCase();" name="fecha_p" type="text" value="{{registro_act.fecha_p |date:"SHORT_DATE_FORMAT"}}" />
+							{% endif %}
+						</div>
+							{% if registro_existe == 1 %}
+								<div class="form-group col-xs-1"><label>Incidencia</label></div>
+							{% else %}
+								<div class="form-group col-xs-1"><label></label></div>
+							{% endif %}
+						<div class="form-group col-xs-3">
+							{% if registro_existe == 1 %}
+								<input id="fecha_o" maxlength="30" placeholder="opcional" style="width: 100%;text-align: center;text-transform:uppercase;" onkeyup="javascript:this.value=this.value.toUpperCase();" name="fecha_o" type="text" value="{{registro_act.fecha_o |date:"SHORT_DATE_FORMAT"}}"/>
+							{% else %}
+								<input id="fecha_o" maxlength="30" placeholder="opcional" style="width: 100%;text-align: center;text-transform:uppercase;" onkeyup="javascript:this.value=this.value.toUpperCase();" name="fecha_o" type="hidden" value="{{registro_act.fecha_o |date:"SHORT_DATE_FORMAT"}}" disabled="disabled"/>
+							{% endif %}
+						</div>
+						<br/><br/><br/><br/>
+						
+						<fieldset><legend style="text-align: left">Descripción de la actividad</legend></fieldset>
+						<div class="form-inline">
+							<div class="form-inline">
+								<div class="form-group col-xs-2"><label>Departamento</label></div>
+								<div class="form-group col-xs-10">
+									{% if registro_existe == 1 %}
+										<select style="width:100%;text-align: left;text-transform:uppercase;" onkeyup="javascript:this.value=this.value.toUpperCase();" class="form-control input-sm" id="departamento" name="departamento" disabled="disabled">
+											<option value="0">Seleccione</option>
+											{% for dep in lista_departamento %}
+												{% if dep.id == registro_act.departamento.id %}
+													<option value="{{dep.id}}" selected='selected'>{{dep.nom_departamento}}</option>
+												{% endif %}
+												{% if not dep.id == registro_act.departamento.id %}
+													<option value="{{dep.id}}">{{dep.nom_departamento}}</option>
+												{% endif %}
+											{% endfor %}
+										</select>
+									{% else %}
+										<select style="width:100%; text-align: left;text-transform:uppercase;" onkeyup="javascript:this.value=this.value.toUpperCase();" class="form-control input-sm" id="departamento" name="departamento">
+												<option value="0">Seleccione</option>
+												{% for dep in lista_departamento %}
+													{% if dep.id == registro_act.departamento.id %}
+														<option value="{{dep.id}}" selected='selected'>{{dep.nom_departamento}}</option>
+													{% endif %}
+													{% if not dep.id == registro_act.departamento.id %}
+														<option value="{{dep.id}}">{{dep.nom_departamento}}</option>
+													{% endif %}
+												{% endfor %}
+										</select>
+									{% endif %}
+								</div>
+							</div>
+							<br/><br/><br/>
+							<div class="form-group col-xs-2"><label>Actividad</label></div>
+							<div class="form-group col-xs-10">
+								{% if registro_existe == 1 %}
+									<input id="nom_actividad" maxlength="30"  style="width: 100%;text-align: center;text-transform:uppercase;" onkeyup="javascript:this.value=this.value.toUpperCase();" name="nom_actividad" placeholder="Nombre de la actividad" type="text" value='{{registro_act.nom_actividad}}' disabled="disabled"/>
+								{% else %}
+									<input id="nom_actividad" maxlength="30"  style="width: 100%;text-align: center;text-transform:uppercase;" onkeyup="javascript:this.value=this.value.toUpperCase();" name="nom_actividad" placeholder="Nombre de la actividad" type="text" value='{{registro_act.nom_actividad}}'/>
+								{% endif %}
+							</div>
+						</div>
+						<br/><br/><br/>
+						<div class="form-group col-xs-12">
+							{% if registro_existe == 1 %}
+								<textarea cols="70" id="des_actividad" name="des_actividad" rows="05" style="width: 100%;text-align: justify;text-transform:uppercase;" onkeyup="javascript:this.value=this.value.toUpperCase();" placeholder="Descripción de la actividad" disabled="disabled">{{registro_act.des_actividad}}</textarea>
+							{% else %}
+								<textarea cols="70" id="des_actividad" name="des_actividad" rows="05" style="width: 100%;text-align: justify;text-transform:uppercase;" onkeyup="javascript:this.value=this.value.toUpperCase();" placeholder="Descripción de la actividad">{{registro_act.des_actividad}}</textarea>
+							{% endif %}
+						</div>
+						<br/><br/><br/>
+						{% if registro_existe == 1 %}
+							<div class="form-group col-xs-1"><label>Observación</label></div>
+						{% else %}
+							<div class="form-group col-xs-1"><label></label></div>
+						{% endif %}
+						<br/><br/>
+						<div class="form-group col-xs-12">
+						{% if registro_existe == 1 %}
+							<textarea cols="70" id="observacion" name="observacion" rows="05" style="width: 100%;text-align: justify;text-transform:uppercase;" onkeyup="javascript:this.value=this.value.toUpperCase();" placeholder="Descripción de la observación">{{registro_act.observacion}}</textarea>
+						{% else %}
+							<textarea style="visibility: hidden" cols="70" id="observacion" name="observacion" rows="05" style="width: 100%;text-align: justify;text-transform:uppercase;" onkeyup="javascript:this.value=this.value.toUpperCase();" placeholder="Descripción de la observación" disabled='disabled'></textarea>
+						{% endif %}
+						</div>
+						<br/><br/>
+						<input id='id_porcentaje' type="hidden" name='porcentaje' value='{{registro_act.porcentaje}}'>
+						<div class="form-group col-xs-3">
+							{% if registro_existe == 1 %}
+								<input id="fecha_f" maxlength="30" placeholder="opcional" style="width: 100%;text-align: center;text-transform:uppercase;" onkeyup="javascript:this.value=this.value.toUpperCase();" name="fecha_f" type="hidden" value="{{registro_act.fecha_f |date:"SHORT_DATE_FORMAT"}}"/>
+							{% endif %}
+						</div>
+					 </div>
+				</div>
+			</div>
+			<!-- Cierre de tabs (Contenidos) -->   
+		</div>
+
+		<input id='status' type="hidden" name='status' value='{{registro_act.status}}'> 
+		<input id='user_update' type="hidden" name='user_update' value='{{ user.id }}'>
+	    <input id='user_create' type="hidden" name='user_create' value='{{registro_act.user_create.id}}'>
+	    <div class="row" style="text-align: center">
+			<button type="button" id="volver" style="font-weight: bold;font-size: 13px" class="btn btn-warning " >
+				&nbsp;<span class="glyphicon glyphicon-chevron-left"></span>&nbsp;Volver
+			</button>
+			<button type="button" id="registrar_act" style="font-weight: bold;font-size: 13px" class="btn btn-danger">
+				&nbsp;<span class="glyphicon glyphicon-floppy-disk"></span>&nbsp;Guardar
+			</button>
+			<button type="reset" id="limpiar" style="font-weight: bold;font-size: 13px;background: linear-gradient(#f4eb2f, #e5a32d); color: white " class="btn">
+				&nbsp;<span class="glyphicon glyphicon-retweet"></span>&nbsp;&nbsp;Limpiar
+			</button>
+	    </div>
+		<br/>
+	</div>
+	<br/>
+
+    </form>
+</body>
+</html>
+
+{% endblock %}

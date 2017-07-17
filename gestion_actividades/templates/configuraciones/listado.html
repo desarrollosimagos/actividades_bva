@@ -1,0 +1,81 @@
+{% extends "base.html" %} <!-- Heredando (Bloque) plantilla index -->
+	{% block title %}{% endblock %}
+	
+	{% block contenido %}
+<html>
+
+<script type="text/javascript">
+   $(document).ready(function(){
+    var TUbch = $('#tab_departamentos').dataTable({
+        "iDisplayLength": 11,
+        "iDisplayStart": 0,
+        "sPaginationType": "full_numbers",
+        "aLengthMenu": [10, 20, 30],
+        "oLanguage": {"sUrl": "/static/js/es.txt"},
+        "aoColumns": [
+            {"sClass": "registro center", "sWidth": "1%"},
+            {"sClass": "registro center", "sWidth": "10%"},
+			{"sClass": "registro center", "sWidth": "10%"},
+			{"sClass": "registro center", "sWidth": "40%"},
+            {"sWidth": "3%", "bSortable": false, "sClass": "center sorting_false", "bSearchable": false},
+			{"sWidth": "3%", "bSortable": false, "sClass": "center sorting_false", "bSearchable": false}
+        ]
+    });
+    $('#enviar').click(function(){
+        url = '/menu/configuraciones/registro/'
+        window.location = url
+    })
+
+});
+</script>
+
+<body>
+{% load templatag_grupos %}
+{% ifusergroup administrador %}
+<div class="row-fluid" >
+	<div class="container mainbody-section text-center"  style="width:100%;">
+			<button role="button" class="btn btn-danger" style="font-weight: bold;font-size: 13px" id="enviar" >
+				&nbsp;<span class="glyphicon glyphicon-plus"></span>&nbsp;Agregar Departamento
+			</button>
+			<table style="width:100%;" border="0" align="center" cellspacing="1" id="tab_departamentos"
+			class="panel panel-warning  table table-bordered table-striped table-hover table-condensed dt-responsive table-responsive" >
+				<thead style="font-size: 16px">
+					<tr style="background-color: #C71C22">
+						<th style='color: white;text-align: center' colspan="6">Listado de Departamentos</th>
+					</tr>
+					<tr class="danger">
+						<th style='text-align: center'>#</th>
+						<th style='text-align: center'>Código</th>
+						<th style='text-align: center'>Siglas</th>
+						<th style='text-align: center'>Nombre del Departamento</th>
+						<th style='text-align: center'>Editar</th>
+						<th style='text-align: center'>Borrar</th>
+					</tr>
+				</thead>
+				<tbody>    
+					{% for dep in listado %}
+
+					<tr style="font-size: 14px;" >
+						<td>{{forloop.counter}} </td>
+						<td>{{dep.cod_departamento}}</td>
+						<td>{{dep.siglas}}</td>
+						<td>{{dep.nom_departamento}}
+						</td>
+						<td style='text-align: center'>
+							<a href='{% url "actualizar" dep.id %}'><img style="width:20px;height: 20px" src="{{ STATIC_URL }}img/edit3.png"/></a>
+						</td>
+						<td style='text-align: center'>
+							<a href='{% url "eliminar" dep.id %}'><img style="width:25px;height: 25px" src="{{ STATIC_URL }}img/delete.png"/></a>
+						</td>
+					</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+	</div>
+{% else %}
+<img src="{{ STATIC_URL }}img/disculpe.png" style="width: auto"/>
+{% endifusergroup %}
+</body>
+</html>
+    {% endblock contenido%}

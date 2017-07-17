@@ -1,0 +1,10 @@
+﻿SELECT aa.cod_actividad, ar.nom_actividad,
+CASE WHEN ar.porcentaje='1' THEN '10%' WHEN ar.porcentaje='2' THEN '20%' WHEN ar.porcentaje='3' THEN '30%'
+WHEN ar.porcentaje='4' THEN '40%' WHEN ar.porcentaje='5' THEN '50%' WHEN ar.porcentaje='6' THEN '60%'
+WHEN ar.porcentaje='7' THEN '70%' WHEN ar.porcentaje='8' THEN '80%' WHEN ar.porcentaje='9' THEN '90%'
+ELSE '100%' END AS porcentaje, 
+CASE WHEN ar.status='1' THEN 'Activo' ELSE 'Inactivo' END AS name, count(ar.status) AS y
+FROM actividad_registros AS ar
+INNER JOIN administrador_actividad AS aa ON ar.cod_actividad_id=aa.id
+WHERE ar.status='1' and ar.cod_departamento_id='6'
+GROUP BY ar.status, ar.nom_actividad, ar.porcentaje, aa.cod_actividad

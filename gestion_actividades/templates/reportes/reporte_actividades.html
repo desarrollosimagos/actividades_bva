@@ -1,0 +1,372 @@
+{% extends 'base.html' %}
+{% block contenido %}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <title>Total de Actividades</title>
+</head>
+<script src="{{ STATIC_URL }}js/exporting.js"></script>
+<script src="{{ STATIC_URL }}js/drilldown.js"></script>
+<script type="text/javascript">
+    var chart;
+
+    $(document).ready(function(){
+		var startDate = new Date('01/01/2015');
+		var fechaActual = new Date()
+		var diaActual = fechaActual.getDate();
+		var mmActual = fechaActual.getMonth() + 1;
+		var yyyyActual = fechaActual.getFullYear();
+		fechaActual = String(diaActual)+'-'+String(mmActual)+'-'+String(yyyyActual)
+		var FromEndDate = new Date();
+		var ToEndDate = new Date();
+		
+		$('#to_date').val(fechaActual)
+		
+		ToEndDate.setDate(ToEndDate.getDate()+365);
+		
+		$('#from_date').datepicker({
+			format: "dd-mm-yyyy",
+			endDate: FromEndDate,
+			language: "es",
+			//startView: 1,
+			autoclose: true,
+			startDate: "-1y"
+		})
+		.on('changeDate', function(selected){
+			startDate = new Date(selected.date.valueOf());
+			startDate.setDate(startDate.getDate(new Date(selected.date.valueOf())));
+			$('#to_date').datepicker('setStartDate', startDate);
+		}); 
+		$('#to_date')
+			.datepicker({
+			format: "dd-mm-yyyy",
+			startDate: startDate,
+			//endDate: ToEndDate,
+			endDate: "Today",
+			autoclose: true,
+			language: "es"
+		})
+		.on('changeDate', function(selected){
+			FromEndDate = new Date(selected.date.valueOf());
+			FromEndDate.setDate(FromEndDate.getDate(new Date(selected.date.valueOf())));
+			$('#from_date').datepicker('setEndDate', FromEndDate);
+		});
+		
+		//$( "#datepicker" )
+		//.datepicker({
+		//	maxDate: 0
+		//}); 
+		
+		$('#id_tipo').change(function() {
+			var tipo = $(this).val();
+			if (tipo == '2') { //Por departamento
+				$('#departamento').select2('val', '0');
+				$('#id_status').prop('disabled',true)
+				$('#departamento').prop('disabled',false)
+				
+			}else if (tipo == '3'){ //Por status
+				$('#id_status').select2('val', '0');
+				$('#departamento').prop('disabled',true)
+				$('#id_status').prop('disabled',false)
+				
+			}else{ //Todo
+				$('#id_status').select2('val', '0');
+				$('#id_status,#departamento').prop('disabled',true)
+				
+			}
+		});
+        $('#pdf_actividad').click(function(){
+            var tipo = $('#id_tipo').find('option').filter(':selected').val()
+			var status = $('#id_status').find('option').filter(':selected').val()
+			var departamento = $('#departamento').find('option').filter(':selected').val()
+			var from_date = $('#from_date').val()
+			var to_date = $('#to_date').val()
+
+            if (from_date == '') {
+				bootbox.alert('Debe Seleccionar la fecha para generar la gráfica', function() {	    
+					$('#from_date').focus();
+				});
+			}else if (to_date == '') {
+                bootbox.alert('Debe Seleccionar la fecha para generar la gráfica', function() {	    
+					$('##to_date').focus();
+				});
+			}else if (tipo == 0) {
+                bootbox.alert('Debe Seleccionar tipo de reporte para poder exportar el PDF', function() {	    
+					$('#id_tipo').select2('open');
+				});
+			}else if ((tipo == 2 ) && departamento == 0)  {
+                bootbox.alert('Debe Seleccionar el departamento de la solicitud  para poder exportar el PDF', function() {	    
+					$('#departamento').select2('open');
+				});
+            }else if ((tipo == 3 ) && status == 0)  {
+                bootbox.alert('Debe Seleccionar el estatus de la solicitud  para poder exportar el PDF', function() {	    
+					$('#id_status').select2('open');
+				});
+            }else{
+                url = 'soportesgeneral/?bandera=pdf&tipo='+tipo+'&desde='+from_date+'&hasta='+to_date+'&departamento='+departamento
+				if (tipo == 3) {
+					url += '&status='+status
+				}else{
+					url = url
+				}
+                window.open(url); 
+            }
+        });
+		
+		$('#grafico_actividad').click(function(){
+			
+			var tipo = $('#id_tipo').find('option').filter(':selected').val()
+			var status = $('#id_status').find('option').filter(':selected').val()
+			var departamento = $('#departamento').find('option').filter(':selected').val()
+			var from_date = $('#from_date').val()
+			var to_date = $('#to_date').val()
+			sub_titulo = "Del "+from_date+" al "+to_date
+
+            if (from_date == '') {
+				bootbox.alert('Debe Seleccionar la fecha para generar la gráfica', function() {	    
+					$('#from_date').focus();
+				});
+			}else if (to_date == '') {
+                bootbox.alert('Debe Seleccionar la fecha para generar la gráfica', function() {	    
+					$('##to_date').focus();
+				});
+			}else if (tipo == 0) {
+                bootbox.alert('Debe Seleccionar tipo de reporte para generar la gráfica', function() {	    
+					$('#id_tipo').select2('open');
+				});
+			}else if ((tipo == 2 ) && departamento == 0)  {
+                bootbox.alert('Debe Seleccionar el departamento de la solicitud  para generar la gráfica', function() {	    
+					$('#departamento').select2('open');
+				});
+            }else if ((tipo == 3 ) && status == 0)  {
+                bootbox.alert('Debe Seleccionar el estatus de la solicitud  para generar la gráfica', function() {	    
+					$('#id_status').select2('open');
+				});
+            }else{
+                url = 'soportesgeneral/?bandera=grafica&tipo='+tipo+'&desde='+from_date+'&hasta='+to_date+'&departamento='+departamento
+				if (tipo == 3) {
+					url += '&status='+status
+				}else{
+					url = url
+				}
+				$.get(url, function(response) {
+					
+					// Make monochrome colors and set them as default for all pies
+					Highcharts.getOptions().plotOptions.pie.colors = (function () {
+						var colors = [],
+							base = Highcharts.getOptions().colors[0],
+							i;
+					
+						for (i = 0; i < 10; i += 1) {
+							// Start out with a darkened base color (negative brighten), and end
+							// up with a much brighter color
+							colors.push(Highcharts.Color(base).brighten((i - 3) / 7).get());
+						}
+						return colors;
+					}());
+					
+					if (response != '' ) {
+						// Build the chart
+						$('#container1').highcharts({
+							chart: {
+								plotBackgroundColor: null,
+								plotBorderWidth: null,
+								plotShadow: false,
+								type: 'pie'
+							},
+							title: {
+								text: 'Actividades asignadas'
+							},
+							subtitle: {
+								text: sub_titulo
+							},
+							tooltip: {
+								pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+							},
+							plotOptions: {
+								pie: {
+									allowPointSelect: true,
+									cursor: 'pointer',
+									dataLabels: {
+										enabled: true,
+										format: '<b>{point.name}</b>: {point.percentage:.1f} %',
+										style: {
+											color: (Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black'
+										}
+									}
+								}
+							},
+							series: [{
+								
+								data: response
+							}]
+						});
+						
+						// Create the chart
+						$('#container2').highcharts({
+							chart: {
+								type: 'column'
+							},
+							title: {
+								text: 'Actividades asignadas'
+							},
+							subtitle: {
+								text: sub_titulo
+							},
+							xAxis: {
+								type: 'category'
+							},
+							yAxis: {
+								title: {
+									text: 'Total de actividades'
+								}
+					
+							},
+							legend: {
+								enabled: false
+							},
+							plotOptions: {
+								series: {
+									borderWidth: 0,
+									dataLabels: {
+										enabled: true,
+										format: '{point.y:.1f}%'
+									}
+								}
+							},
+					
+							tooltip: {
+								headerFormat: '<span style="font-size:11px">{series.name}</span><br>',
+								pointFormat: '<span style="color:{point.color}">{point.name}</span>: <b>{point.y:.2f}%</b> de total<br/>'
+							},
+					
+							series: [{
+								
+								data: response
+								
+							}],
+							
+						});
+					}
+					else{
+						bootbox.alert('Disculpe aun no hay registros para esta fecha o institución', function() {	    
+							$('#container1,#container2').html('')
+						});
+
+					}
+					
+				},'json')
+			}
+
+        });
+		
+		$("#departamento,#id_tipo,#id_status").select2();
+		$('#limpiar').click(function(){
+			$('select').select2('val',0)
+            //$('input[type="text"]').val('')
+			$('#from_date').val("");
+			//$('#from_date,#to_date,#id_tipo,#id_status,#departamento').select2('val', '0');
+		})
+
+    });
+</script>
+
+<body>
+	{% load templatag_grupos %}
+    {% ifusergroup gerente %}
+	<br/>
+    <div style="width: 100%;text-transform:uppercase;box-shadow: 0 1px 5px rgba(0,0,0,.85); text-align: left;font-weight: bold" class="panel panel-danger">
+        <div class="panel-heading text-center" style="font-size: 20px">
+			Generación de Reportes (Actividades) 
+        </div>
+		
+        <div class="panel-body" style="text-align: left;font-weight: bold">
+			<fieldset><legend class="titulo">Seleccione rango de fecha y tipo de reporte</legend></fieldset>
+            <div class="form-group col-xs-1">Desde</div>
+            <div class="form-group col-xs-3">
+				<input style="text-align: center" id="from_date" placeholder="SELECCIONE" contenteditable="false" type="text">
+            </div>
+			<div class="form-group col-xs-1">Hasta</div>
+            <div class="form-group col-xs-3">
+				<input style="text-align: center" id="to_date" placeholder="SELECCIONE" contenteditable="false" type="text">
+            </div>
+			<div class="col-xs-1">
+				Tipo
+            </div>
+            <div class="col-xs-3">
+				<select style="width: 100%;font-weight:bold;font-size: 13px;text-align: center" id="id_tipo" >
+					<option value='0'>SELECCIONE</option>
+					<option value='1'>GENERAL</option>
+					<option value='2'>POR DEPARTAMENTO</option>
+					<option value='3'>POR ESTATUS</option>
+				</select>
+			</div>
+			<br/><br/><br/>
+			<div class="col-xs-1">
+				Estatus
+            </div>
+            <div class="col-xs-3">
+				<select style="width: 100%;font-weight:bold;font-size: 13px;text-align: center" id="id_status" >
+					<option value='0'>SELECCIONE</option>
+					<option value='1'>ACTIVO</option>
+					<option value='2'>INACTIVO</option>
+				</select>
+			</div>
+			<div class="col-xs-1">
+				Gerencia
+            </div>
+            <div class="col-xs-7">
+				<select style="width: 100%;font-weight:bold;font-size: 13px;text-align: center" id="departamento" >
+					<option value='0'>SELECCIONE</option>
+					{% for dep in departamento %}
+						<option value="{{dep.id}}">{{dep.nom_departamento}}</option>
+					{% endfor %}
+				</select>
+			</div>
+			<br/><br/><br/><br/><br/>
+			<!--<div class="col-xs-1">
+				Consultar
+            </div>-->
+            <div class="col-xs-8">
+				<button role="button" id="grafico_actividad" style="font-weight: bold;" class="btn btn-danger">
+					<span class="glyphicon glyphicon-stats"></span>&nbsp;Gráfico&nbsp;
+				</button>
+				<button role="button" id="pdf_actividad" style="font-weight: bold;"  class="btn btn-danger">
+					<span class="glyphicon glyphicon-file"></span>&nbsp;PDF
+				</button>
+				<button type="reset" id="limpiar" style="font-weight: bold;font-size: 13px" class="btn btn-danger">
+					&nbsp;<span class="glyphicon glyphicon-retweet"></span>&nbsp;&nbsp;Limpiar
+				</button>
+			</div>
+        </div>
+		
+		
+	
+		<div id="id_graficas" style="width: 100%">
+			<div style="float: left;width: 50%;">
+				<div id="container1" style="min-width: 310px; height: 400px; max-width: 600px; margin: 0 auto"></div>
+				
+			</div>
+			<div style="float: left;width: 50%;">
+				<div id="container2" style="min-width: 310px; height: 400px; max-width: 600px; margin: 0 auto"></div>
+			</div>
+		</div>
+		<div style="width: 50%">
+			<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>
+		</div>
+        
+    </div>
+    
+    
+    
+{% else %}
+<img src="{{ STATIC_URL }}img/disculpe.png" style="width: auto"/>
+{% endifusergroup %}   
+</body>
+</html>
+
+{% endblock %}
+
+

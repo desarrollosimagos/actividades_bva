@@ -1,0 +1,157 @@
+{% extends "base.html" %} <!-- Heredando (Bloque) plantilla index -->
+	{% block title %}{% endblock %}
+	
+	{% block contenido %}
+<html>
+
+<script type="text/javascript">
+   $(document).ready(function(){
+	  var TUbch = $('#tab_actividades').dataTable({
+		  "iDisplayLength": 11,
+		  "iDisplayStart": 0,
+		  "sPaginationType": "full_numbers",
+		  "aLengthMenu": [10, 20, 30],
+		  "oLanguage": {"sUrl": "/static/js/es.txt"},
+		  "aoColumns": [
+			  {"sClass": "registro center", "sWidth": "1%"},
+			  {"sClass": "registro center", "sWidth": "10%"},
+			  {"sClass": "registro center", "sWidth": "15%"},
+			  {"sClass": "registro center", "sWidth": "15%"},
+			  {"sClass": "registro center", "sWidth": "30%"},
+			  {"sClass": "registro center", "sWidth": "10%"},
+			  {"sClass": "registro center", "sWidth": "10%"},
+			  {"sWidth": "3%", "bSortable": false, "sClass": "center sorting_false", "bSearchable": false},
+			  {"sWidth": "3%", "bSortable": false, "sClass": "center sorting_false", "bSearchable": false},
+			  {"sWidth": "3%", "bSortable": false, "sClass": "center sorting_false", "bSearchable": false}
+		  ]
+	  });
+	  $('#enviar').click(function(){
+		  url = '/menu/registros/administrador/registro/'
+		  window.location = url
+	  })
+	  
+	  $('.eliminar').click(function(e){
+		 e.preventDefault()
+		 var url = $(this).attr('href')
+		 var padre = $(this).closest('tr');
+		 var nRow  = padre[0];
+		 bootbox.confirm("Desea Eliminar el Registro?", function(result) {
+			if (result) {
+			   $.post(url, {csrfmiddlewaretoken: '{{ csrf_token }}','accion':'eliminar'}, function(response) {
+				  if (response.existe=='si') {
+					 bootbox.alert("El Registro no puede ser eliminado ya que posee registros asociados", function() {
+						   
+					 });
+				  }else{
+					 TUbch.fnDeleteRow(nRow);
+					 bootbox.alert("El Registro fue eliminado exitosamnete", function() {
+						   
+					 });
+				  }
+			   },'json')	
+			}
+		 }); 
+		
+		
+	  });
+
+   });
+</script>
+<script>
+   $(document).ready(function(){
+	   $('[data-toggle="tooltip"]').tooltip(); 
+   });
+</script>
+
+<body>
+{% load templatag_grupos %}
+{% ifusergroup administrador %}
+<div class="row-fluid" >
+   <br/><br/>
+			<table style="width:100%;" border="0" align="center" cellspacing="1" id="tab_actividades"
+			class="panel panel-warning  table table-bordered table-striped table-hover table-condensed dt-responsive table-responsive" >
+				<thead style="font-size: 16px">
+					<tr style="background-color: #C71C22">
+						<th style='color: white;text-align: center' colspan="10">Listado de Actividades</th>
+					</tr>
+					<tr class="danger">
+						<th style='text-align: center'>#</th>
+						<th style='text-align: center'>% Avance</th>
+						<th style='text-align: center'>Código</th>
+						<th style='text-align: center'>Gerencia</th>
+						<th style='text-align: center'>Actividad</th>
+						<th style='text-align: center'>Eficiencia</th>
+						<th style='text-align: center'>Estatus</th>
+						<th style='text-align: center'>Ver</th>
+						<th style='text-align: center'>Editar</th>
+						<th style='text-align: center'>Borrar</th>
+					</tr>
+				</thead>
+				<tbody>    
+					{% for n in listado %}
+
+					<tr style="font-size: 14px;" >
+						<td>{{forloop.counter}} </td>
+						<td>{% if n.porcentaje == '1' %}
+								10%
+						   {% elif n.porcentaje == '2'%}
+							   20%
+						   {% elif n.porcentaje == '3'%}
+							   30%
+						   {% elif n.porcentaje == '4'%}
+							   40%
+						   {% elif n.porcentaje == '5'%}
+							   50%
+						   {% elif n.porcentaje == '6'%}
+							   60%
+						   {% elif n.porcentaje == '7'%}
+							   70%
+						   {% elif n.porcentaje == '8'%}
+							   80%
+						   {% elif n.porcentaje == '9'%}
+							   90%
+						   {% elif n.porcentaje == '10' %}
+								100%
+						   {% else %}
+							  -
+						   {% endif %}</td>
+						<td>{{n.cod_actividad}}</td>
+						<td><p data-toggle="tooltip" data-placement="top" title="{{n.departamento__nom_departamento}}">{{n.departamento__siglas}}</p></td>
+						<td>{{n.nom_actividad}}</td>
+						<td>{% if n.porcentaje == '10' and n.fecha_f <= n.fecha_p %}
+							  <img style="width:20px;height: 20px" src="{{ STATIC_URL }}img/button_ok.png"/>
+							  {% else %}
+								 <img style="width:20px;height: 20px" src="{{ STATIC_URL }}img/button_cancel.png"/>
+							  {% endif %}
+						</td>
+						<td>{% if n.status == '1' %}
+								 <span style='color: red; font-weight: bold'>ACTIVO</span>
+							  {% else %}
+								 <span style='color: blue; font-weight: bold'>INACTIVO</span>
+							  {% endif %}
+						</td>
+						<td style='text-align: center'>
+						   {% if n.porcentaje > '0' %}
+							  <a href='{% url "visualizar" n.id %}'><img style="width:30px;height: 30px" src="{{ STATIC_URL }}img/ver1.png"/></a>
+						   {% else %}
+							  <img style="width:30px;height: 30px" src="{{ STATIC_URL }}img/ver2.png"/>
+						   {% endif %}
+						</td>
+						<td style='text-align: center'>
+							<a href='{% url "actualizando" n.id %}'><img style="width:20px;height: 20px" src="{{ STATIC_URL }}img/edit3.png"/></a>
+						</td>
+						<td style='text-align: center'>
+							<a class="eliminar" href='{% url "eliminando" n.id %}'><img style="width:25px;height: 25px" src="{{ STATIC_URL }}img/delete.png"/></a>
+						</td>
+					</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+	</div>
+{% else %}
+<img src="{{ STATIC_URL }}img/disculpe.png" style="width: auto"/>
+{% endifusergroup %}
+</body>
+</html>
+    {% endblock contenido%}

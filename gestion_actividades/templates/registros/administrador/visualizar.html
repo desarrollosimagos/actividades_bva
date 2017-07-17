@@ -1,0 +1,184 @@
+{% extends "base.html" %} <!-- Heredando (Bloque) plantilla index -->
+
+{% block contenido %}
+
+<html>
+
+<script type="text/javascript">
+    $(document).ready(function(){
+        $('#volver').click(function(){
+            url = '/menu/registros/administrador/listar/'
+            window.location = url
+        })
+    })
+</script>
+<style>
+    label{
+        font-weight: bold
+    }
+</style>
+<body>
+	
+    <form method="post" id="form_visualizar" enctype="multipart/form-data">
+	{% csrf_token %}
+	<br/>
+	<div style="width: 100%;text-transform:uppercase;box-shadow: 0 1px 5px rgba(0,0,0,.85); text-align: left" onkeyup="javascript:this.value=this.value.toUpperCase();" class="panel panel-danger">
+	    <div class="panel-heading">
+			<label style="float: left" class="panel-title " ><a style="color: white" href="/menu/registros/administrador/listar/" >Actividad</a>
+			> Porcentaje de la Actividad</label>
+			<br>
+		</div>
+			<div class="panel-body">
+				<!-- Apertura de Tabs (Secciones) -->
+				<ul class="nav nav-tabs">
+					<li class="active" data-toggle="popover" data-trigger="focus" title="Datos del equipo" data-content="En este panel se visualizan los porcentajes de las actividades en estatus activo" data-placement="top">
+						<a data-toggle="tab" href="#tabs_A">Actividad en desarrollo</a>
+					</li>
+				</ul>
+				<!-- Cierre de Tabs (Secciones) -->
+				<!-- Apertura de tabs (Contenidos) -->
+				<div class="tab-content">
+					<div id="tabs_A" class="tab-pane fade in active">
+						<div class="panel-body">
+							<!-- Apertura de datos principales de la empresa  -->							
+							<div class="form-group col-xs-1"><label>Usuario</label></div>
+                            <div class="form-group col-xs-5">
+                                <span style="color: red; font-weight: bold">{{usuario|upper}}</span>
+                            </div>
+							<div class="form-group col-xs-1"><label>Estatus</label></div>
+							<div class="form-group col-xs-3">
+                                <span style='color: red; font-weight: bold'>
+									{% if registro_act.status == '1' %}
+											<span style='color: red; font-weight: bold'>Activo</span>
+									{% endif %}
+									{% if registro_act.status == '2' %}
+											<span style='color: blue; font-weight: bold'>Inactivo</span>
+									{% endif %}
+								</span>
+                            </div>
+							<br/><br/><br/><br/>
+                            <div class="form-inline">
+                                <div class="form-group col-xs-1"><label>Inicio</label></div>
+                                <div class="form-group col-xs-5">
+                                    <input id="fecha_i" maxlength="30"  style="width: 100%;text-align: center" name="fecha_i" type="text" value="{{registro_act.fecha_i |date:"SHORT_DATE_FORMAT"}}" disabled="disabled"/>
+                                </div>
+                            </div>
+							<div class="form-group col-xs-1"><label>Pautada</label></div>
+                            <div class="form-group col-xs-5">
+                                <input id="fecha_p" maxlength="30"  style="width: 100%;text-align: center" name="fecha_p" type="text" value="{{registro_act.fecha_p |date:"SHORT_DATE_FORMAT"}}" disabled="disabled"/>
+                            </div>
+							<br/><br/><br/><br/>
+							
+							<fieldset><legend style="text-align: left">Descripción de la actividad</legend></fieldset>
+								<div class="form-inline">
+                                    <div class="form-group col-xs-1"><label>Código</label></div>
+                                    <div class="form-group col-xs-2">
+                                        <input id="cod_actividad" maxlength="30"  style="width: 100%;text-align: center" name="cod_actividad" type="text" value='{{registro_act.cod_actividad}}' disabled="disabled"/>
+                                    </div>
+                                    <div class="form-group col-xs-1"><label>Actividad</label></div>
+                                    <div class="form-group col-xs-8">
+                                        <input id="nom_actividad" maxlength="30"  style="width: 100%;text-align: center" name="nom_actividad" placeholder="Nombre de la actividad" type="text" value='{{registro_act.nom_actividad}}' disabled="disabled"/>
+                                    </div>
+                                    <br/><br/><br/>
+								</div>
+								<div class="form-inline">
+									<div class="form-group col-xs-1"><label>Descripción</label></div>
+									<br/><br/>
+									<div class="form-group col-xs-12">
+										<textarea cols="70" id="des_actividad" name="des_actividad" rows="05" style="width: 100%;text-align: justify" placeholder="Descripción de la observación" disabled='disabled'>{{registro_act.des_actividad}}</textarea>
+									</div>
+                                    <br/><br/><br/>
+								</div>
+								
+								
+						</div>
+						<div class="panel-body">
+							<div class="form-inline">
+								<div class="form-group col-xs-1"><label>Gerencia</label></div>
+								<div class="form-group col-xs-11">
+									<select style="width:100%;text-align: left" class="form-control input-sm" id="departamento" name="departamento" disabled="disabled">
+										<option value="0">Seleccione</option>
+										{% for dep in lista_departamento %}
+											{% if dep.id == registro_act.departamento.id %}
+												<option value="{{dep.id}}" selected='selected'>{{dep.nom_departamento}}</option>
+											{% endif %}
+											{% if not dep.id == registro_act.departamento.id %}
+												<option value="{{dep.id}}">{{dep.nom_departamento}}</option>
+											{% endif %}
+										{% endfor %}
+									</select>
+								</div>
+								<br/><br/><br/>
+								<div class="form-group col-xs-1"><label>Porcentaje</label></div>
+								<br/><br/>
+								<div class="form-group col-xs-12">
+									{% if registro_act.porcentaje == '1' %}
+										<div class="progress progress-striped active">
+											<div class="progress-bar progress-bar-danger" style="width: 10%"><span style='color: blue; font-weight: bold'>10%</span></div>
+										</div>
+									{% endif %}
+									{% if registro_act.porcentaje == '2' %}
+										<div class="progress progress-striped active">
+											<div class="progress-bar progress-bar-danger" style="width: 20%"><span style='color: blue; font-weight: bold'>20%</span></div>
+										</div>
+									{% endif %}
+									{% if registro_act.porcentaje == '3' %}
+										<div class="progress progress-striped active">
+											<div class="progress-bar progress-bar-danger" style="width: 30%"><span style='color: blue; font-weight: bold'>30%</span></div>
+										</div>
+									{% endif %}
+									{% if registro_act.porcentaje == '4' %}
+										<div class="progress progress-striped active">
+											<div class="progress-bar progress-bar-warning" style="width: 40%"><span style='color: blue; font-weight: bold'>40%</span></div>
+										</div>
+									{% endif %}
+									{% if registro_act.porcentaje == '5' %}
+										<div class="progress progress-striped active">
+											<div class="progress-bar progress-bar-warning" style="width: 50%"><span style='color: blue; font-weight: bold'>50%</span></div>
+										</div>
+									{% endif %}
+									{% if registro_act.porcentaje == '6' %}
+										<div class="progress progress-striped active">
+											<div class="progress-bar progress-bar-warning" style="width: 60%"><span style='color: blue; font-weight: bold'>60%</span></div>
+										</div>
+									{% endif %}
+									{% if registro_act.porcentaje == '7' %}
+										<div class="progress progress-striped active">
+											<div class="progress-bar progress-bar-warning" style="width: 70%"><span style='color: blue; font-weight: bold'>70%</span></div>
+										</div>
+									{% endif %}
+									{% if registro_act.porcentaje == '8' %}
+										<div class="progress progress-striped active">
+											<div class="progress-bar progress-bar-success" style="width: 80%"><span style='color: blue; font-weight: bold'>80%</span></div>
+										</div>
+									{% endif %}
+									{% if registro_act.porcentaje == '9' %}
+										<div class="progress progress-striped active">
+											<div class="progress-bar progress-bar-success" style="width: 90%"><span style='color: blue; font-weight: bold'>90%</span></div>
+										</div>
+									{% endif %}
+									{% if registro_act.porcentaje == '10' %}
+										<div class="progress progress-striped active">
+											<div class="progress-bar progress-bar-success" style="width: 100%"><span style='color: blue; font-weight: bold'>100%</span></div>
+										</div>
+									{% endif %}
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<!-- Cierre de tabs (Contenidos) -->
+                <input id='user_create' type="hidden" name='user_create' value='{{ user.id }}'>
+                <div class="row" style="text-align: center">
+					<button type="button" id="volver" style="font-weight: bold;font-size: 13px" class="btn btn-warning " >
+						&nbsp;<span class="glyphicon glyphicon-chevron-left"></span>&nbsp;Volver
+					</button>
+				</div>
+			</div>
+            
+	</div>
+    </form>
+</body>
+</html>
+
+{% endblock %}
